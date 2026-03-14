@@ -1,0 +1,28 @@
+# Node
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+
+# Build
+dist/
+build/
+web-build/
+
+# Logs
+npm-debug.log
+yarn-error.log
+
+# Env
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+bin/
+tmp/
+*.exe
+*.log
