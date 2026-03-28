@@ -9,7 +9,7 @@ type Activity struct {
 	Title       string    `gorm:"type:varchar(100);not null" json:"title"`
 	City        string    `gorm:"type:varchar(50);index;comment:'活动所属城市'" json:"city"` // 👈 新增：用于筛选
 	Destination string    `gorm:"type:varchar(100);not null" json:"destination"`
-	GatherTime  time.Time `gorm:"not null;comment:'集合时间'" json:"gather_time"`
+	GatherTime  time.Time `gorm:"not null;index;comment:'集合时间'" json:"gather_time"`
 	GatherPlace string    `gorm:"type:varchar(100);not null" json:"gather_place"`
 	FeeType     string    `gorm:"type:varchar(20);comment:'AA/免费'" json:"fee_type"`
 	GroupQrCode string    `gorm:"type:varchar(255);comment:'微信群二维码'" json:"group_qr_code"`

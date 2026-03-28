@@ -3,6 +3,7 @@ package router
 import (
 	"outdoor-app-backend/internal/handler"
 	"outdoor-app-backend/internal/middleware"
+	"outdoor-app-backend/internal/middleware/ratelimit"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,15 +13,17 @@ func InitRouter() *gin.Engine {
 	r.Static("/uploads", "./uploads") // 静态资源
 
 	apiV1 := r.Group("/api/v1")
+	apiV1.Use(ratelimit.GlobalRateLimit(100, 1))
+	apiV1.Use(ratelimit.UserGlobalRateLimit(60, 60))
 	{
 		// ================== 公共接口 (无需登录) ==================
 		auth := apiV1.Group("/auth")
 		{
-			auth.POST("/register", handler.Register)
-			auth.POST("/login", handler.Login)
+			auth.POST("/register", ratelimit.RateLimit(5, 60), handler.Register)
+			auth.POST("/login", ratelimit.RateLimit(5, 60), handler.Login)
 		}
 
-		apiV1.GET("/ws", handler.ConnectWebSocket)
+		apiV1.GET("/ws", ratelimit.RateLimit(10, 60), handler.ConnectWebSocket)
 		// ================== 需要登录的接口 (使用 JWT 中间件) ==================
 		// 使用 Use() 方法，表示这之下的所有路由都必须先通过 JWTAuth 检查
 		authorized := apiV1.Group("/")
@@ -29,13 +32,15 @@ func InitRouter() *gin.Engine {
 			// 1. 【活动模块】 (占位)
 			activity := authorized.Group("/activity")
 			{
-				activity.GET("/list", handler.GetActivityList)           //获取活动
-				activity.GET("/detail/:id", handler.GetActivityDetail)   //查看具体活动
-				activity.POST("/create", handler.CreateActivity)         //发布活动
-				activity.DELETE("/delete/:id", handler.DeleteActivity)   //删除活动
-				activity.POST("/apply/:id", handler.ApplyActivity)       //用户报名
-				activity.POST("/audit", handler.AuditMember)             //发起人审核活动
-				activity.GET("/members/:id", handler.GetActivityMembers) //发起人查看审核列表
+				activity.GET("/list", handler.GetActivityList)                                //获取活动
+				activity.GET("/detail/:id", handler.GetActivityDetail)                        //查看具体活动
+				activity.POST("/create", ratelimit.RateLimit(10, 60), handler.CreateActivity) //发布活动
+				activity.DELETE("/delete/:id", handler.DeleteActivity)                        //删除活动
+				activity.POST("/apply/:id", handler.ApplyActivity)                            //用户报名
+				activity.POST("/audit", handler.AuditMember)                                  //发起人审核活动
+				activity.GET("/members/:id", handler.GetActivityMembers)                      //发起人查看审核列表
+				activity.GET("/search", handler.SearchActivityByLocation)
+				activity.GET("/weather/:city", handler.GetCityWeather) // 根据地点搜索
 			}
 
 			// 2. 【路线模块】 (占位)
@@ -56,11 +61,11 @@ func InitRouter() *gin.Engine {
 			// 3. 🌟【户外圈子与互动模块】 (朋友圈)
 			post := authorized.Group("/post")
 			{
-				post.GET("/list", handler.GetPostList)         // 动态列表
-				post.POST("/create", handler.PublishPost)      // 发布动态
-				post.POST("/comment", handler.AddComment)      // 评论
-				post.POST("/like/:id", handler.ToggleLike)     // 点赞/取消点赞
-				post.DELETE("/delete/:id", handler.DeletePost) //删除动态
+				post.GET("/list", handler.GetPostList)                                  // 动态列表
+				post.POST("/create", ratelimit.RateLimit(5, 60), handler.PublishPost)   // 发布动态
+				post.POST("/comment", ratelimit.RateLimit(5, 60), handler.AddComment)   // 评论
+				post.POST("/like/:id", ratelimit.RateLimit(30, 60), handler.ToggleLike) // 点赞/取消点赞
+				post.DELETE("/delete/:id", handler.DeletePost)                          //删除动态
 			}
 			// 4. 【百科模块】 (占位)
 			article := authorized.Group("/article")
@@ -101,7 +106,7 @@ func InitRouter() *gin.Engine {
 			// 6. 【通用图片上传接口】
 			common := authorized.Group("/common")
 			{
-				common.POST("/upload", handler.UploadImage)
+				common.POST("/upload", ratelimit.RateLimit(30, 60), handler.UploadImage)
 			}
 
 			// 7. 【消息通知模块】

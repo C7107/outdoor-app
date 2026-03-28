@@ -4,6 +4,7 @@ import (
 	"errors"
 	"outdoor-app-backend/internal/database"
 	"outdoor-app-backend/internal/model"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -227,4 +228,36 @@ func GetActivitiesJoinedByUser(userID uint, page, pageSize int) ([]model.Activit
 		Find(&members).Error
 
 	return members, err
+}
+
+// SearchActivitiesByLocation 根据目的地进行模糊搜索（支持分页）
+func SearchActivitiesByLocation(keyword string, page, pageSize int) ([]model.Activity, error) {
+	var activities []model.Activity
+
+	// 为了实现模糊匹配，需要在前后加上 '%'
+	likeKeyword := "%" + keyword + "%"
+
+	err := database.DB.Model(&model.Activity{}).
+		Where("destination LIKE ?", likeKeyword). // 🌟 核心：模糊搜索 destination
+		Order("created_at DESC").                 // 按最新发布排序
+		Offset((page - 1) * pageSize).
+		Limit(pageSize).
+		Preload("Initiator"). // 预加载发起人信息 (后续 DTO 转换需要)
+		Find(&activities).Error
+
+	return activities, err
+}
+
+// AutoUpdateActivityStatus 自动流转活动状态（防全表扫描）
+func AutoUpdateActivityStatus() (int64, error) {
+	// 🌟 核心：一条 SQL 搞定批量更新！
+	// 翻译为 SQL: UPDATE activities SET status = 'ended' WHERE status IN ('enrolling', 'full', 'ongoing') AND gather_time < NOW();
+	// 因为 status 和 gather_time 都有索引，MySQL 会瞬间定位到需要改的那几条数据，完全不会碰五六年前的老数据！
+
+	result := database.DB.Model(&model.Activity{}).
+		Where("status IN ?", []string{"enrolling", "full", "ongoing"}).
+		Where("gather_time < ?", time.Now()).
+		Update("status", "ended")
+
+	return result.RowsAffected, result.Error
 }

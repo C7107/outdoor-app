@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"outdoor-app-backend/configs"
 	"outdoor-app-backend/internal/model" // ⚠️ 替换为你的真实项目模块名
 
 	"gorm.io/driver/mysql"
@@ -20,7 +21,7 @@ func InitMySQL(isSeed bool) {
 	// 1. 配置 DSN (Data Source Name)
 	// 格式: 用户名:密码@tcp(IP:端口)/数据库名?参数...
 	// ⚠️ 请确保你已经在 MySQL 里提前建好了 outdoor_db 这个空数据库！
-	dsn := "root:123456@tcp(127.0.0.1:3306)/outdoor_db?charset=utf8mb4&parseTime=True&loc=Local&multiStatements=true"
+	dsn := configs.AppConfig.Database.DSN
 
 	// 2. 连接数据库
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
@@ -42,6 +43,7 @@ func InitMySQL(isSeed bool) {
 		&model.Post{}, &model.Comment{}, &model.PostLike{},
 		&model.Article{},
 		&model.Message{},
+		&model.CityWeather{}, // 新增天气表
 	)
 	if err != nil {
 		log.Fatalf("❌ 表结构同步失败: %v", err)

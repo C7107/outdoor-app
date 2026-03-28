@@ -1,0 +1,17 @@
+# configs/config.yaml
+server:
+  port: ":8080"
+  mode: "debug" # debug 或 release
+
+database:
+  driver: "mysql"
+  dsn: "root:123456@tcp(127.0.0.1:3306)/outdoor_db?charset=utf8mb4&parseTime=True&loc=Local"
+
+redis:
+  addr: "127.0.0.1:16379"
+  password: ""
+  db: 0
+
+jwt:
+  secret: "OutdoorApp_SecretKey_2024"
+  expire_hours: 168 # 7天

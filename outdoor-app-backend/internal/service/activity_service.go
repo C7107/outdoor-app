@@ -275,3 +275,55 @@ func GetActivityMembers(initiatorID, activityID uint, status string, page, pageS
 	}
 	return res, nil
 }
+
+// SearchActivityByLocation 搜索活动 (复用 ActivityDetailRes 格式)
+func SearchActivityByLocation(keyword string, page, pageSize int) ([]dto.ActivityDetailRes, error) {
+	// 1. 调用 Repository 获取底层数据
+	activities, err := repository.SearchActivitiesByLocation(keyword, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []dto.ActivityDetailRes
+
+	// 如果没有搜到数据，返回空数组而不是 null (防呆设计)
+	if len(activities) == 0 {
+		return []dto.ActivityDetailRes{}, nil
+	}
+
+	// 2. 遍历数据，组装成安全的 DTO
+	for _, a := range activities {
+		// 解析图片 JSON 数组
+		var images []string
+		json.Unmarshal([]byte(a.Images), &images)
+
+		res = append(res, dto.ActivityDetailRes{
+			ID:             a.ID,
+			Title:          a.Title,
+			City:           a.City,
+			Destination:    a.Destination,
+			GatherTime:     a.GatherTime,
+			GatherPlace:    a.GatherPlace,
+			FeeType:        a.FeeType,
+			GroupQrCode:    "", // 🌟 列表页绝对不返回二维码
+			CoverImage:     a.CoverImage,
+			Description:    a.Description,
+			Images:         images,
+			MinFitness:     a.MinFitness,
+			AgeLimit:       a.AgeLimit,
+			MaxMembers:     a.MaxMembers,
+			CurrentMembers: a.CurrentMembers,
+			Status:         a.Status,
+			WeatherAlert:   a.WeatherAlert,
+			Initiator: dto.UserBasicInfo{
+				ID:       a.Initiator.ID,
+				Nickname: a.Initiator.Nickname,
+				Avatar:   a.Initiator.Avatar,
+			},
+			HasApplied:  false, // 列表页不查个人的报名状态，省性能
+			ApplyStatus: "",
+		})
+	}
+
+	return res, nil
+}

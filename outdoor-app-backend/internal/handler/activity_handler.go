@@ -116,3 +116,44 @@ func GetActivityMembers(c *gin.Context) {
 	}
 	response.Success(c, list)
 }
+
+// SearchActivityByLocation 模糊搜索目的地
+func SearchActivityByLocation(c *gin.Context) {
+	// 1. 获取搜索关键词 (query 参数)
+	keyword := c.Query("keyword")
+	if keyword == "" {
+		response.Fail(c, e.InvalidParams, "搜索关键词不能为空")
+		return
+	}
+
+	// 2. 获取分页参数 (复用之前写好的 getPagination 辅助函数)
+	page, pageSize := getPagination(c)
+
+	// 3. 调用 Service
+	list, err := service.SearchActivityByLocation(keyword, page, pageSize)
+	if err != nil {
+		response.Fail(c, e.Error, "搜索失败")
+		return
+	}
+
+	// 4. 返回成功响应
+	response.Success(c, list)
+}
+
+// GetCityWeather 获取指定城市的未来 5 天天气 (供前端详情页展示用)
+func GetCityWeather(c *gin.Context) {
+	city := c.Param("city")
+	if city == "" {
+		response.Fail(c, e.InvalidParams, "城市名不能为空")
+		return
+	}
+
+	// 🌟 调用我们写好的智能缓存服务，不耗费额度极速返回
+	weathers, err := service.GetAndSyncWeather(city)
+	if err != nil {
+		response.Fail(c, e.Error, "获取天气失败")
+		return
+	}
+
+	response.Success(c, weathers)
+}
