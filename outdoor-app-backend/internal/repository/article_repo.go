@@ -26,14 +26,17 @@ func GetArticlesByAuthor(authorID uint, page, pageSize int) ([]model.Article, er
 	return articles, err
 }
 
+// CreateArticle 创建一篇新的百科文章 (供 Service 层调用)
 func CreateArticle(article *model.Article) error {
 	return database.DB.Create(article).Error
 }
 
+// UpdateArticle 更新整篇文章 (仅作者本人可操作，需在 Service 层校验权限)
 func UpdateArticle(article *model.Article) error {
 	return database.DB.Save(article).Error
 }
 
+// DeleteArticle 删除文章 (仅作者本人可操作，需在 Service 层校验权限)
 func DeleteArticle(id uint) error {
 	return database.DB.Delete(&model.Article{}, id).Error
 }

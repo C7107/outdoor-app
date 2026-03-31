@@ -22,6 +22,7 @@ func GetUserProfile(userID uint) (*dto.UserProfileRes, error) {
 		Signature:        user.Signature,
 		FitnessLevel:     user.FitnessLevel,
 		EmergencyContact: user.EmergencyContact,
+		Role:             user.Role,
 	}, nil
 }
 

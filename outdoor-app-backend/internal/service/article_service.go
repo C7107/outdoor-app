@@ -19,7 +19,22 @@ func CreateArticle(authorID uint, req *dto.ArticleCreateReq) error {
 		Cover:    req.Cover,
 		Content:  req.Content,
 	}
-	return repository.CreateArticle(article)
+
+	// 1. 入库
+	if err := repository.CreateArticle(article); err != nil {
+		return err
+	}
+
+	// 2. 🌟 删除所有文章分页缓存（关键！！）
+	// 模糊删除 articles:page:*
+	pattern := "articles:page:*"
+	keys, err := database.RedisClient.Keys(database.Ctx, pattern).Result()
+	if err == nil && len(keys) > 0 {
+		database.RedisClient.Del(database.Ctx, keys...)
+		fmt.Println("🧹 已清除文章列表缓存")
+	}
+
+	return nil
 }
 
 // 获取某人的文章列表
@@ -87,7 +102,19 @@ func UpdateArticle(authorID, articleID uint, req *dto.ArticleUpdateReq) error {
 	}
 
 	// 4. 执行更新
-	return repository.UpdateArticlePartial(articleID, updateData)
+	if err := repository.UpdateArticlePartial(articleID, updateData); err != nil {
+		return err
+	}
+	// 5. 🌟 删除所有文章分页缓存（关键！！）
+
+	pattern := "articles:page:*"
+	keys, err := database.RedisClient.Keys(database.Ctx, pattern).Result()
+	if err == nil && len(keys) > 0 {
+		database.RedisClient.Del(database.Ctx, keys...)
+		fmt.Println("🧹 已清除文章列表缓存")
+	}
+
+	return nil
 }
 
 // DeleteArticle 删除百科 (核心校验：只能删自己的)
@@ -101,5 +128,17 @@ func DeleteArticle(authorID, articleID uint) error {
 		return errors.New("无权删除他人的文章")
 	}
 
-	return repository.DeleteArticle(articleID)
+	if err := repository.DeleteArticle(articleID); err != nil {
+		return err
+	}
+
+	// 5. 🌟 删除所有文章分页缓存（关键！！）
+	pattern := "articles:page:*"
+	keys, err := database.RedisClient.Keys(database.Ctx, pattern).Result()
+	if err == nil && len(keys) > 0 {
+		database.RedisClient.Del(database.Ctx, keys...)
+		fmt.Println("🧹 已清除文章列表缓存")
+	}
+
+	return nil
 }

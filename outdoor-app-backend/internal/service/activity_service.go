@@ -271,6 +271,7 @@ func GetActivityMembers(initiatorID, activityID uint, status string, page, pageS
 				Nickname: m.User.Nickname,
 				Avatar:   m.User.Avatar,
 			},
+			EmergencyContact: m.User.EmergencyContact,
 		})
 	}
 	return res, nil

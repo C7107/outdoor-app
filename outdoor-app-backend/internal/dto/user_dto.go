@@ -40,6 +40,7 @@ type UserProfileRes struct {
 	Signature        string `json:"signature"`
 	FitnessLevel     int    `json:"fitness_level"`
 	EmergencyContact string `json:"emergency_contact"`
+	Role             string `json:"role"`
 }
 
 // UserUpdateReq 修改个人资料请求

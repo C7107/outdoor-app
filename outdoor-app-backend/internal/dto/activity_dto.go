@@ -65,8 +65,9 @@ type ActivityAuditReq struct {
 
 // ActivityMemberRes 报名用户精简列表
 type ActivityMemberRes struct {
-	MemberID      uint          `json:"member_id"` // 👈 用于调用审核接口的主键
-	EquipmentNote string        `json:"equipment_note"`
-	Status        string        `json:"status"` // pending/approved/rejected
-	User          UserBasicInfo `json:"user"`   // 报名者的头像昵称
+	MemberID         uint          `json:"member_id"` // 👈 用于调用审核接口的主键
+	EquipmentNote    string        `json:"equipment_note"`
+	Status           string        `json:"status"` // pending/approved/rejected
+	User             UserBasicInfo `json:"user"`   // 报名者的头像昵称
+	EmergencyContact string        `json:"emergency_contact"`
 }
